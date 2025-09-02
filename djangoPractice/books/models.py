@@ -15,6 +15,7 @@ class Book(models.Model):
 class User(models.Model):
     name = models.CharField(max_length=20)
     email = models.EmailField(unique=True)
+    password = models.CharField(max_length=15, null=True)
     phone = models.BigIntegerField(
         validators=[
             MinValueValidator(1000000000),   # minimum 10-digit number

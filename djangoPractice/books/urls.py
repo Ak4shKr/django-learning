@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
-from .views import BookDeleteAPIView, BookListCreateAPIView, DeleteAllBooksAPIView, CreateUserAPIView, UserDetailAPIView
+from .views import BookDeleteAPIView, BookListCreateAPIView, DeleteAllBooksAPIView, CreateUserAPIView, UserDetailAPIView, UserLoginAPIView
+
 urlpatterns = [
     #books api
     path('', BookListCreateAPIView.as_view(), name='book_list_create'),
@@ -10,4 +11,5 @@ urlpatterns = [
     #users api
     path('user/', CreateUserAPIView.as_view(), name='user'),
     path('user/<int:id>/', UserDetailAPIView.as_view(), name='user_detail'),
+    path("login/", UserLoginAPIView.as_view(), name="user-login"),
 ]

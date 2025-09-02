@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qsl
-
+from datetime import timedelta
 load_dotenv()
 
 from pathlib import Path
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'books', 
 ]
 
@@ -78,7 +79,7 @@ WSGI_APPLICATION = 'djangoPractice.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# NEON POSTGRES SETUP
 
 tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
 
@@ -140,4 +141,15 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
+    'SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
 }

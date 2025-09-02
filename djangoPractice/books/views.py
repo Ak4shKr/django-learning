@@ -46,6 +46,7 @@ from rest_framework import status
 from .models import Book, User
 from .serializers import BookSerializer, UserSerializer
 from .permissions import IsManager  
+from rest_framework.permissions import IsAuthenticated
 
 # Handle GET (list all books) and POST (create book)
 class BookListCreateAPIView(APIView):
@@ -107,6 +108,7 @@ class DeleteAllBooksAPIView(APIView):
 
 
 class CreateUserAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -116,6 +118,17 @@ class CreateUserAPIView(APIView):
                 "data": serializer.data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response({
+            "message": "Users fetched successfully",
+            "count": users.count(),
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    
     
 class UserDetailAPIView(APIView):
     def get(self, request, id):
@@ -131,3 +144,45 @@ class UserDetailAPIView(APIView):
             "message": "User fetched successfully",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
+        
+        
+class UserLoginAPIView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        # Check if both fields are provided
+        if not email or not password:
+            return Response(
+                {"error": "Email and password are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Invalid email or password"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Compare password with given password
+        if not (user.password == password):
+            return Response(
+                {"error": "Invalid email or password"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return Response(
+            {
+                "message": "Login successful",
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email,
+                    "is_manager": user.is_manager,
+                }
+            },
+            status=status.HTTP_200_OK
+        )
+
