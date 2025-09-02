@@ -43,8 +43,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Book
+from .models import Book, User
 from .serializers import BookSerializer, UserSerializer
+from .permissions import IsManager  
 
 # Handle GET (list all books) and POST (create book)
 class BookListCreateAPIView(APIView):
@@ -83,8 +84,8 @@ class BookDeleteAPIView(APIView):
 
 #delete all books at once
 class DeleteAllBooksAPIView(APIView):
-    # permission_classes = [IsManager]
-    def delete(self, request):
+    permission_classes = [IsManager]
+    def delete(self, request, *args, **kwargs):
         try:
             count, _ = Book.objects.all().delete()
 
@@ -103,3 +104,30 @@ class DeleteAllBooksAPIView(APIView):
                 {"error": "Unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class CreateUserAPIView(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "User created successfully",
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UserDetailAPIView(APIView):
+    def get(self, request, id):
+        try:
+            user = User.objects.get(id=id)
+        except User.DoesNotExist:
+            return Response({
+                "message": f"User with id {id} not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user)
+        return Response({
+            "message": "User fetched successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
