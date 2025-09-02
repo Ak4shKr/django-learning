@@ -11,3 +11,12 @@ class Book(models.Model):
 
     def __str__(self):
         return self.title
+
+class User(models.Model):
+    name:models.CharField(max_length=20)
+    email:models.email()
+    phone:models.IntegerField(max_length=10)
+    is_manager:models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
