@@ -12,4 +12,9 @@ urlpatterns = [
     path('user/', CreateUserAPIView.as_view(), name='user'),
     path('user/<int:id>/', UserDetailAPIView.as_view(), name='user_detail'),
     path("login/", UserLoginAPIView.as_view(), name="user-login"),
+    
+    #library api
+    path('library/borrow/', views.LibraryListCreateAPIView.as_view(), name='Book-Borrowing'),
+    # path('library/return/<int:id>/', views.LibraryReturnAPIView.as_view(), name='Book-Returning'),
+    
 ]

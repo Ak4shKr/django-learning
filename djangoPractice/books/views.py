@@ -43,8 +43,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Book, User
-from .serializers import BookSerializer, UserSerializer
+from .models import Book, User, Library
+from .serializers import BookSerializer, UserSerializer, LibrarySerializer
 from .permissions import IsManager  
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -88,7 +88,9 @@ class BookDeleteAPIView(APIView):
 
 #delete all books at once
 class DeleteAllBooksAPIView(APIView):
-    permission_classes = [IsManager]
+    authentication_classes = [JWTAuthentication]   # 🔒 Require JWT
+    permission_classes = [IsAuthenticated, IsManager] 
+
     def delete(self, request, *args, **kwargs):
         try:
             count, _ = Book.objects.all().delete()
@@ -116,7 +118,7 @@ class CreateUserAPIView(APIView):
     def get_permissions(self):
         if self.request.method == "GET":
             return [IsAuthenticated()]   # 🔒 Require JWT
-        return [AllowAny()]              # 🔓 Public (for POST)
+        return [AllowAny()]  
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -203,3 +205,44 @@ class UserLoginAPIView(APIView):
             status=status.HTTP_200_OK
         )
 
+class LibraryListCreateAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        book_id = request.data.get("book_id")
+        if not book_id:
+            return Response(
+                {"error": "book_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            book = Book.objects.get(id=book_id)
+        except Book.DoesNotExist:
+            return Response(
+                {"error": "Book not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 🔍 Check availability
+        if book.quantity_available <= 0:
+            return Response(
+                {"error": f"'{book.title}' is not available for borrowing"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ Decrease count
+        book.quantity_available -= 1
+        book.save()
+
+        # ✅ Create borrow record manually
+        borrow = Library.objects.create(
+            user=request.user,   # 👈 auto from JWT
+            book=book
+        )
+
+        return Response({
+            "message": "Book borrowed successfully",
+            "data": LibrarySerializer(borrow).data
+        }, status=status.HTTP_201_CREATED)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Book, User
+from .models import Book, User, Library
 
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,3 +16,9 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         return User.objects.create_user(password=password, **validated_data)
+    
+class LibrarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Library
+        fields = ["id", "user", "book", "borrowed_date", "return_date"]
+        read_only_fields = ["id", "user", "borrowed_date", "return_date"]

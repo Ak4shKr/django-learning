@@ -8,6 +8,7 @@ class Book(models.Model):
     author = models.CharField(max_length=100)
     genre = models.CharField(max_length=50, default="Unknown")
     price = models.IntegerField(validators=[MaxValueValidator(2000)])
+    quantity_available = models.IntegerField(validators=[MinValueValidator(0)],  default=1)
     published_date = models.DateField()
 
     def __str__(self):
@@ -45,4 +46,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+
+class Library(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    borrowed_date = models.DateField(auto_now_add=True)
+    return_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.book.title}"
 
