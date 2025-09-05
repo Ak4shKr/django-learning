@@ -47,6 +47,9 @@ from .models import Book, User
 from .serializers import BookSerializer, UserSerializer
 from .permissions import IsManager  
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.serializers import RefreshToken
+from rest_framework.permissions import AllowAny
 
 # Handle GET (list all books) and POST (create book)
 class BookListCreateAPIView(APIView):
@@ -108,7 +111,13 @@ class DeleteAllBooksAPIView(APIView):
 
 
 class CreateUserAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsAuthenticated()]   # 🔒 Require JWT
+        return [AllowAny()]              # 🔓 Public (for POST)
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -147,6 +156,8 @@ class UserDetailAPIView(APIView):
         
         
 class UserLoginAPIView(APIView):
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]  
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -172,6 +183,10 @@ class UserLoginAPIView(APIView):
                 {"error": "Invalid email or password"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+        # Generate JWT token
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
 
         return Response(
             {
@@ -181,6 +196,8 @@ class UserLoginAPIView(APIView):
                     "name": user.name,
                     "email": user.email,
                     "is_manager": user.is_manager,
+                    "access_token": access_token,
+                    "refresh_token": str(refresh),
                 }
             },
             status=status.HTTP_200_OK
