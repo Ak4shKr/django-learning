@@ -112,7 +112,11 @@ class DeleteAllBooksAPIView(APIView):
 
 class CreateUserAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsAuthenticated()]   # 🔒 Require JWT
+        return [AllowAny()]              # 🔓 Public (for POST)
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
